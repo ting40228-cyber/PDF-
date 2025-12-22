@@ -24,28 +24,19 @@ const PdfToImageConverter: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [pages, setPages] = useState<PagePreview[]>([]);
   
-  // 轉存設定
   const [dpi, setDpi] = useState(300);
   const [targetWidthMm, setTargetWidthMm] = useState<number | ''>(''); 
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  /**
-   * 關鍵函數：手動修改 JPG 二進位檔標頭，寫入 DPI 資訊
-   * 這是讓 Windows 內容資訊或 Photoshop 能辨識正確尺寸的關鍵
-   */
   const injectDpiToJpeg = (blob: Blob, dpi: number): Promise<Blob> => {
     return new Promise((resolve) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const arrayBuffer = e.target?.result as ArrayBuffer;
         const view = new DataView(arrayBuffer);
-        
-        // 檢查 JPEG 檔案標記 (FF D8) 與 JFIF APP0 (FF E0)
         if (view.getUint16(0) === 0xFFD8 && view.getUint16(2) === 0xFFE0) {
-          // JFIF 區段中的單位位置在 offset 13 (1 = dots per inch)
           view.setUint8(13, 1);
-          // X 與 Y 解析度在 offset 14 與 16 (各 2 bytes)
           view.setUint16(14, dpi);
           view.setUint16(16, dpi);
         }
@@ -92,18 +83,14 @@ const PdfToImageConverter: React.FC = () => {
         const viewport = page.getViewport({ scale: 1 });
         const originalWidthPts = viewport.width; 
         
-        // 1. 計算目標比例
         let renderScale: number;
         if (targetWidthMm !== '' && targetWidthMm > 0) {
-          // 目標寬度的像素 = (目標mm / 25.4) * DPI
           const targetWidthPixels = (targetWidthMm / 25.4) * dpi;
           renderScale = targetWidthPixels / originalWidthPts;
         } else {
-          // 原始尺寸的像素 = (原始點數 / 72) * DPI
           renderScale = dpi / 72;
         }
 
-        // Fix: 'getExtendedViewport' is not a standard method on PDFPageProxy, using 'getViewport' instead.
         const finalViewport = page.getViewport({ scale: renderScale });
         const canvas = document.createElement('canvas');
         canvas.width = Math.floor(finalViewport.width);
@@ -115,20 +102,19 @@ const PdfToImageConverter: React.FC = () => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
+        // Fix: Add back the required 'canvas' property to RenderParameters
         await page.render({ 
           canvasContext: context, 
           viewport: finalViewport,
           canvas: canvas
         }).promise;
         
-        // 2. 產出原始 Blob 並注入 DPI Metadata
         const rawBlob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.95));
         let finalBlob: Blob | null = null;
         if (rawBlob) {
           finalBlob = await injectDpiToJpeg(rawBlob, dpi);
         }
 
-        // 3. 製作預覽縮圖
         const thumbScale = 400 / originalWidthPts; 
         const thumbCanvas = document.createElement('canvas');
         const thumbViewport = page.getViewport({ scale: thumbScale });
@@ -138,7 +124,12 @@ const PdfToImageConverter: React.FC = () => {
         if (thumbCtx) {
             thumbCtx.fillStyle = '#ffffff';
             thumbCtx.fillRect(0, 0, thumbCanvas.width, thumbCanvas.height);
-            await page.render({ canvasContext: thumbCtx, viewport: thumbViewport, canvas: thumbCanvas }).promise;
+            // Fix: Add back the required 'canvas' property to RenderParameters
+            await page.render({ 
+              canvasContext: thumbCtx, 
+              viewport: thumbViewport,
+              canvas: thumbCanvas
+            }).promise;
         }
 
         newPages.push({
@@ -158,7 +149,7 @@ const PdfToImageConverter: React.FC = () => {
       }
       setPages(newPages);
     } catch (error) {
-      alert('處理失敗，可能檔案過大或瀏覽器記憶體不足。');
+      alert('處理失敗');
     } finally {
       setIsProcessing(false);
     }
@@ -176,7 +167,6 @@ const PdfToImageConverter: React.FC = () => {
     URL.revokeObjectURL(url);
   };
 
-  // 您要求的常用尺寸規格
   const presetSizes = [
     { label: 'A0', width: 841, height: 1189 },
     { label: 'A1', width: 841, height: 594 },
@@ -274,15 +264,6 @@ const PdfToImageConverter: React.FC = () => {
                       />
                       <div className="absolute right-5 top-1/2 -translate-y-1/2 opacity-30 group-focus-within:opacity-100 transition-opacity"><Ruler className="w-5 h-5" /></div>
                     </div>
-                    
-                    {targetWidthMm !== '' && originalPdfInfo && (
-                      <div className="mt-3 p-4 bg-orange-50 rounded-xl flex justify-between items-center border border-orange-100">
-                        <span className="text-[9px] font-black text-orange-400 uppercase italic">預估導出高度</span>
-                        <span className="text-sm font-black text-orange-600 italic">
-                          {Math.round((targetWidthMm / originalPdfInfo.widthMm) * originalPdfInfo.heightMm * 10) / 10} MM
-                        </span>
-                      </div>
-                    )}
                   </div>
                 </div>
 
@@ -290,11 +271,6 @@ const PdfToImageConverter: React.FC = () => {
                   <button onClick={processPdf} className="w-full py-6 bg-orange-500 text-white rounded-[2rem] font-black text-sm uppercase italic tracking-widest shadow-xl shadow-orange-500/20 hover:bg-orange-600 transition-all flex items-center justify-center gap-3">
                     <Sliders className="w-5 h-5" /> 更新渲染清單
                   </button>
-                  {pages.length > 0 && (
-                    <button onClick={() => pages.forEach(p => downloadImage(p.blob, p.pageNumber))} className="w-full py-6 bg-slate-100 text-slate-600 rounded-[2rem] font-black text-sm uppercase italic tracking-widest hover:bg-slate-200 transition-all flex items-center justify-center gap-3">
-                      <Download className="w-5 h-5" /> 批次下載 JPG
-                    </button>
-                  )}
                 </div>
              </div>
 
@@ -302,23 +278,17 @@ const PdfToImageConverter: React.FC = () => {
                 <div className="flex items-center gap-3 text-orange-500 mb-4 font-black">
                   <AlertTriangle className="w-4 h-4" /> <span>技術說明</span>
                 </div>
-                本系統產出的 JPG 已內嵌 JFIF 密度標籤。下載後使用專業印刷軟體開啟時，其顯示之「毫米尺寸」將會與此處標示完全一致。
+                本系統產出的 JPG 已內嵌 JFIF 密度標籤。
              </div>
           </div>
 
           <div className="col-span-12 lg:col-span-8 bg-white rounded-[3rem] border shadow-sm flex flex-col overflow-hidden min-h-[600px]">
              <div className="p-8 border-b bg-slate-50/30 flex justify-between items-center">
                 <h4 className="font-black italic text-slate-800 flex items-center gap-3 uppercase tracking-tighter"><ImageIcon className="w-6 h-6 text-orange-500" /> 導出結果預覽</h4>
-                {pages.length > 0 && <span className="text-[10px] font-black bg-slate-900 text-white px-5 py-2 rounded-full uppercase italic tracking-widest">已完成渲染 {pages.length} 頁</span>}
              </div>
 
              <div className="flex-1 p-10 bg-[#fcfcfd] overflow-y-auto custom-scrollbar">
-                {pages.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center py-20 text-slate-300">
-                     <Loader2 className={`w-16 h-16 mb-6 ${isProcessing ? 'animate-spin' : 'opacity-20'}`} />
-                     <p className="font-black italic uppercase tracking-widest">{isProcessing ? '正在進行精準物理尺寸採樣...' : '請在上傳檔案後點擊「產出印刷級影像」'}</p>
-                  </div>
-                ) : (
+                {pages.length > 0 && (
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
                     {pages.map(p => (
                       <div key={p.pageNumber} className="group bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm hover:shadow-xl transition-all hover:scale-[1.02]">
@@ -329,20 +299,8 @@ const PdfToImageConverter: React.FC = () => {
                             className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-opacity gap-3"
                           >
                             <div className="p-4 bg-orange-500 rounded-full shadow-2xl"><Download className="w-6 h-6" /></div>
-                            <span className="text-[10px] font-black uppercase italic tracking-widest">下載此頁 JPG</span>
+                            <span className="text-[10px] font-black uppercase italic tracking-widest">下載 JPG</span>
                           </button>
-                        </div>
-                        <div className="p-4 border-t space-y-1">
-                           <div className="flex items-center justify-between">
-                             <span className="text-[11px] font-black text-slate-800 italic">頁面 {p.pageNumber}</span>
-                             <span className="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
-                               {p.outputWidthPx} x {p.outputHeightPx} PX
-                             </span>
-                           </div>
-                           <div className="flex items-center justify-between text-[8px] font-bold text-orange-500 uppercase tracking-widest bg-orange-50 px-2 py-1 rounded-md">
-                             <span>物理尺寸:</span>
-                             <span>{p.outputMmW} x {p.outputMmH} MM @ {dpi}DPI</span>
-                           </div>
                         </div>
                       </div>
                     ))}

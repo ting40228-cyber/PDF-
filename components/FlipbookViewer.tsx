@@ -53,7 +53,7 @@ const FlipbookViewer: React.FC = () => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Fix: Added the 'canvas' property to the render call to satisfy the RenderParameters type.
+        // Fix: Add back the required 'canvas' property to RenderParameters
         await page.render({ 
           canvasContext: context, 
           viewport,
@@ -74,7 +74,6 @@ const FlipbookViewer: React.FC = () => {
     if (currentPage < pages.length - 1 && !isLoading && !flipDirection) {
       setFlipDirection('next');
       setTimeout(() => {
-        // 從封面(0)跳到下一頁(1)，之後每次跳兩頁(跨頁)
         setCurrentPage(prev => Math.min(prev + (prev === 0 ? 1 : 2), pages.length - 1));
         setFlipDirection(null);
       }, 500); 
@@ -85,7 +84,6 @@ const FlipbookViewer: React.FC = () => {
     if (currentPage > 0 && !isLoading && !flipDirection) {
       setFlipDirection('prev');
       setTimeout(() => {
-        // 從第一跨頁(1)回封面(0)，或回退兩頁
         setCurrentPage(prev => Math.max(prev - (prev <= 2 ? 1 : 2), 0));
         setFlipDirection(null);
       }, 500);
@@ -100,7 +98,6 @@ const FlipbookViewer: React.FC = () => {
     const spreadMaxWidth = isLandscape ? 'max-w-[1300px]' : 'max-w-[1100px]';
     const shadowClass = 'shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)]';
 
-    // 封面視圖 (第一頁單頁)
     if (currentPage === 0) {
       return (
         <div className={`flex justify-center items-center w-full h-full perspective-2000 ${flipDirection === 'next' ? 'animate-flip-left' : 'animate-in fade-in zoom-in-95 duration-700'}`}>
@@ -112,7 +109,6 @@ const FlipbookViewer: React.FC = () => {
       );
     }
 
-    // 封底視圖 (最後一頁單頁)
     if (currentPage === pages.length - 1) {
        return (
         <div className={`flex justify-center items-center w-full h-full perspective-2000 ${flipDirection === 'prev' ? 'animate-flip-right' : 'animate-in fade-in zoom-in-95 duration-700'}`}>
@@ -124,7 +120,6 @@ const FlipbookViewer: React.FC = () => {
       );
     }
 
-    // 跨頁視圖 (內頁兩兩一組)
     const leftPageIdx = currentPage;
     const rightPageIdx = currentPage + 1;
 
@@ -216,7 +211,6 @@ const FlipbookViewer: React.FC = () => {
           </div>
         ) : (
           <div className="w-full h-full relative p-24 select-none flex items-center justify-center">
-            {/* 透明點擊翻頁區域 */}
             <div 
               onClick={goToPrev} 
               className="absolute left-0 inset-y-0 w-1/2 z-40 cursor-w-resize opacity-0 hover:opacity-5 transition-opacity bg-white" 

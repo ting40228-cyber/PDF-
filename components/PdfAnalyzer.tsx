@@ -24,7 +24,7 @@ const PdfAnalyzer: React.FC<PdfAnalyzerProps> = ({ onTransfer }) => {
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<PageAnalysis[]>([]);
   const [copiedType, setCopiedType] = useState<'color' | 'bw' | null>(null);
-  const [filterIssues, setFilterIssues] = useState(false); // 檢視解析度/出血問題頁面的選項
+  const [filterIssues, setFilterIssues] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -62,7 +62,7 @@ const PdfAnalyzer: React.FC<PdfAnalyzerProps> = ({ onTransfer }) => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Fix: Added the 'canvas' property to the render call to satisfy the RenderParameters type.
+        // Fix: Add back the required 'canvas' property to RenderParameters
         await page.render({ 
           canvasContext: context, 
           viewport: renderViewport,
@@ -124,7 +124,7 @@ const PdfAnalyzer: React.FC<PdfAnalyzerProps> = ({ onTransfer }) => {
 
   const filteredResults = useMemo(() => {
     if (!filterIssues) return results;
-    return results.filter(r => r.isLowRes || (r.widthMm <= 210)); // 簡易判斷問題頁面
+    return results.filter(r => r.isLowRes || (r.widthMm <= 210));
   }, [results, filterIssues]);
 
   return (
@@ -157,7 +157,6 @@ const PdfAnalyzer: React.FC<PdfAnalyzerProps> = ({ onTransfer }) => {
 
       {stats && (
         <div className="space-y-10 animate-in slide-in-from-bottom-12 duration-700">
-          {/* 印前異常警示區塊 */}
           {(!stats.isBleed || stats.hasLowRes) && (
             <div className="bg-red-50 border-l-8 border-red-500 p-8 rounded-3xl flex items-start gap-6 shadow-md">
               <AlertTriangle className="w-12 h-12 text-red-500 shrink-0 mt-1" />
