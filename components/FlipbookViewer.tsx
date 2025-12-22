@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Upload, ChevronLeft, ChevronRight, BookOpen, Share2, Copy, Loader2, Palette, Layout } from 'lucide-react';
@@ -53,7 +52,7 @@ const FlipbookViewer: React.FC = () => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Fix: Added 'canvas' property to satisfy the RenderParameters type requirement
+        // Fix: Add 'canvas' property to meet RenderParameters type requirements
         await page.render({ 
           canvasContext: context, 
           viewport: viewport,

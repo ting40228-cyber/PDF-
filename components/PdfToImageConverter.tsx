@@ -1,7 +1,6 @@
-
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
-import { Upload, FileCheck, Image as ImageIcon, Download, Settings, AlertTriangle, Loader2, Ruler, Sliders, RefreshCw, FileText } from 'lucide-react';
+import { Upload, FileCheck, Image as ImageIcon, Download, Settings, RefreshCw, Sliders, FileText, Ruler, AlertTriangle } from 'lucide-react';
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
@@ -102,7 +101,7 @@ const PdfToImageConverter: React.FC = () => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Restore 'canvas' property to satisfy the RenderParameters type which requires it in this context
+        // Fix: Add 'canvas' property to meet RenderParameters type requirements
         await page.render({ 
           canvasContext: context, 
           viewport: finalViewport,
@@ -124,7 +123,7 @@ const PdfToImageConverter: React.FC = () => {
         if (thumbCtx) {
             thumbCtx.fillStyle = '#ffffff';
             thumbCtx.fillRect(0, 0, thumbCanvas.width, thumbCanvas.height);
-            // Restore 'canvas' property to satisfy the RenderParameters type which requires it in this context
+            // Fix: Add 'canvas' property for thumbnail generation
             await page.render({ 
               canvasContext: thumbCtx, 
               viewport: thumbViewport,
