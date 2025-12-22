@@ -102,7 +102,7 @@ const PdfToImageConverter: React.FC = () => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Fix: Added canvas property as it is required by the environment's RenderParameters type
+        // Restore 'canvas' property to satisfy the RenderParameters type which requires it in this context
         await page.render({ 
           canvasContext: context, 
           viewport: finalViewport,
@@ -124,7 +124,7 @@ const PdfToImageConverter: React.FC = () => {
         if (thumbCtx) {
             thumbCtx.fillStyle = '#ffffff';
             thumbCtx.fillRect(0, 0, thumbCanvas.width, thumbCanvas.height);
-            // Fix: Added canvas property to the render call for the thumbnail
+            // Restore 'canvas' property to satisfy the RenderParameters type which requires it in this context
             await page.render({ 
               canvasContext: thumbCtx, 
               viewport: thumbViewport,

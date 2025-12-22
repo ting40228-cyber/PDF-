@@ -62,7 +62,7 @@ const PdfAnalyzer: React.FC<PdfAnalyzerProps> = ({ onTransfer }) => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Fix: Added canvas property as it is required by the environment's RenderParameters type
+        // Restore 'canvas' property to satisfy the RenderParameters type which requires it in this context
         await page.render({ 
           canvasContext: context, 
           viewport: renderViewport,
@@ -238,7 +238,6 @@ const PdfAnalyzer: React.FC<PdfAnalyzerProps> = ({ onTransfer }) => {
                   </div>
 
                   <div className="h-px bg-white/10 w-full mb-8"></div>
-                  {/* Fix: Added missing spine property and completed the onTransfer call */}
                   <button onClick={() => onTransfer({ totalPages: stats.total, colorCount: stats.color, bwCount: stats.bw, spine: stats.spine })} className="w-full py-6 bg-orange-500 text-white rounded-2xl font-black text-xs italic shadow-xl shadow-orange-500/20 hover:bg-orange-600 transition-all uppercase tracking-widest flex items-center justify-center gap-3">
                     <Calculator className="w-4 h-4" /> 傳送數據至報價系統
                   </button>
