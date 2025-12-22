@@ -62,7 +62,7 @@ const PdfAnalyzer: React.FC<PdfAnalyzerProps> = ({ onTransfer }) => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Fix: Add back the required 'canvas' property to RenderParameters
+        // Fix: Added canvas property as it is required by the environment's RenderParameters type
         await page.render({ 
           canvasContext: context, 
           viewport: renderViewport,
@@ -238,52 +238,38 @@ const PdfAnalyzer: React.FC<PdfAnalyzerProps> = ({ onTransfer }) => {
                   </div>
 
                   <div className="h-px bg-white/10 w-full mb-8"></div>
-                  <button onClick={() => onTransfer({ totalPages: stats.total, colorCount: stats.color, bwCount: stats.bw, spine: stats.spine })} className="w-full py-6 bg-orange-500 text-white rounded-[2rem] font-black text-sm italic uppercase tracking-widest hover:bg-orange-600 transition-all flex items-center justify-center gap-3 shadow-xl shadow-orange-500/20">
-                    <Calculator className="w-5 h-5" /> 帶入智慧報價系統
+                  {/* Fix: Added missing spine property and completed the onTransfer call */}
+                  <button onClick={() => onTransfer({ totalPages: stats.total, colorCount: stats.color, bwCount: stats.bw, spine: stats.spine })} className="w-full py-6 bg-orange-500 text-white rounded-2xl font-black text-xs italic shadow-xl shadow-orange-500/20 hover:bg-orange-600 transition-all uppercase tracking-widest flex items-center justify-center gap-3">
+                    <Calculator className="w-4 h-4" /> 傳送數據至報價系統
                   </button>
                </div>
             </div>
-
-            <div className="col-span-12 lg:col-span-8 bg-white rounded-[2.5rem] border shadow-sm flex flex-col overflow-hidden">
-              <div className="p-8 border-b flex justify-between items-center bg-slate-50/30">
-                <div className="flex items-center gap-4">
-                  <h4 className="font-black italic text-slate-800 flex items-center gap-3 uppercase tracking-tighter"><Eye className="w-6 h-6 text-orange-500" /> 技術檢視模式</h4>
-                  <button 
-                    onClick={() => setFilterIssues(!filterIssues)}
-                    className={`flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-black transition-all ${filterIssues ? 'bg-red-500 text-white' : 'bg-slate-200 text-slate-600 hover:bg-slate-300'}`}
-                  >
-                    <Filter className="w-3 h-3" /> {filterIssues ? '顯示所有頁面' : '只顯示有問題的頁面'}
-                  </button>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-[10px] font-black bg-slate-100 text-slate-500 px-4 py-2 rounded-full uppercase italic">300 DPI 模擬檢查</span>
-                  <span className="text-[10px] font-black bg-slate-900 text-white px-5 py-2 rounded-full uppercase italic tracking-widest">Total {stats.total} Pages</span>
-                </div>
-              </div>
-              <div className="p-10 grid grid-cols-3 sm:grid-cols-4 xl:grid-cols-5 gap-8 overflow-y-auto h-[700px] bg-[#fcfcfd] custom-scrollbar">
-                {filteredResults.map(p => (
-                  <div key={p.pageNumber} className={`aspect-[1/1.4] rounded-2xl overflow-hidden border-2 transition-all hover:scale-105 hover:z-10 bg-white shadow-sm flex flex-col relative group ${p.isColor ? 'border-orange-200 ring-8 ring-orange-500/5' : 'border-slate-100'}`}>
-                    <div className="flex-1 overflow-hidden relative">
-                      <img src={p.thumbnail} className="w-full h-full object-contain" alt={`Page ${p.pageNumber}`} />
-                      {p.isLowRes && (
-                        <div className="absolute top-2 right-2 bg-red-500 p-1.5 rounded-lg shadow-lg group-hover:scale-125 transition-transform">
-                          <AlertTriangle className="w-3 h-3 text-white" />
-                        </div>
-                      )}
+            
+            <div className="col-span-12 lg:col-span-8 bg-white p-10 rounded-[2.5rem] border shadow-sm flex flex-col overflow-hidden">
+               <div className="flex justify-between items-center mb-8 border-b pb-6">
+                 <h5 className="font-black text-slate-800 text-xl italic uppercase tracking-tighter">分頁色彩分析結果</h5>
+                 <div className="flex gap-4">
+                    <button onClick={() => setFilterIssues(!filterIssues)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase italic transition-all ${filterIssues ? 'bg-orange-500 text-white' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}>
+                      {filterIssues ? '顯示全部頁面' : '僅顯示異常頁面'}
+                    </button>
+                 </div>
+               </div>
+               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 overflow-y-auto max-h-[1000px] pr-4 custom-scrollbar">
+                  {filteredResults.map(res => (
+                    <div key={res.pageNumber} className={`relative rounded-2xl border overflow-hidden group transition-all hover:scale-[1.03] hover:shadow-xl ${res.isLowRes ? 'border-red-200 bg-red-50/30' : 'border-slate-100'}`}>
+                       <div className="aspect-[1/1.41] bg-slate-50 flex items-center justify-center overflow-hidden">
+                         <img src={res.thumbnail} className="w-full h-full object-cover" alt={`Page ${res.pageNumber}`} />
+                         <div className="absolute top-2 left-2 bg-slate-900/80 backdrop-blur-sm text-white px-2 py-1 rounded-lg text-[10px] font-black italic">P.{res.pageNumber}</div>
+                         {res.isColor && <div className="absolute top-2 right-2 bg-orange-500 text-white p-1 rounded-md shadow-lg"><Palette className="w-3 h-3" /></div>}
+                         {res.isLowRes && <div className="absolute bottom-2 left-2 bg-red-500 text-white p-1 rounded-md shadow-lg"><AlertTriangle className="w-3 h-3" /></div>}
+                       </div>
+                       <div className="p-3 bg-white/80 backdrop-blur-md border-t border-slate-100 flex justify-between items-center">
+                          <span className="text-[9px] font-black text-slate-400 uppercase italic">{res.widthMm}x{res.heightMm}mm</span>
+                          <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase italic ${res.isColor ? 'bg-orange-100 text-orange-600' : 'bg-slate-100 text-slate-400'}`}>{res.isColor ? 'Color' : 'BW'}</span>
+                       </div>
                     </div>
-                    <div className="bg-white text-slate-400 text-[9px] font-black text-center py-2 border-t flex flex-col items-center group-hover:bg-slate-50">
-                      <span>P.{p.pageNumber}</span>
-                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[8px] text-slate-300 font-mono">{p.widthMm}x{p.heightMm}mm</span>
-                    </div>
-                  </div>
-                ))}
-                {filteredResults.length === 0 && (
-                  <div className="col-span-full py-20 text-center">
-                    <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4 opacity-20" />
-                    <p className="text-slate-400 font-black italic uppercase tracking-widest">此過濾條件下無任何頁面</p>
-                  </div>
-                )}
-              </div>
+                  ))}
+               </div>
             </div>
           </div>
         </div>
