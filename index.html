@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PrintMaster PDF Toolkit</title>
+    <title>影城數位印刷 - 專業 PDF 工具箱</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -30,16 +30,20 @@
 <script type="importmap">
 {
   "imports": {
-    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
+    "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "pdfjs-dist": "https://esm.sh/pdfjs-dist@^5.4.449"
+    "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
+    "pdfjs-dist": "https://esm.sh/pdfjs-dist@^5.4.449",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "vite": "https://esm.sh/vite@^7.3.0"
   }
 }
 </script>
 </head>
 <body>
     <div id="root"></div>
+    <!-- 關鍵：明確告訴瀏覽器從哪裡開始執行程式 -->
+    <script type="module" src="/index.tsx"></script>
 </body>
 </html>

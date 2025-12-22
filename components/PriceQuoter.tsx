@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Settings, Plus, Trash2, Layers, Calculator, Palette, ClipboardCheck, Download, ChevronUp, ChevronDown, SaveAll, Sliders, Tag, Percent, Sparkles, Copy, X, Printer, Check } from 'lucide-react';
+import { Settings, Plus, Trash2, Layers, Calculator, Palette, ClipboardCheck, Download, ChevronUp, ChevronDown, SaveAll, Sliders, Tag, Percent, Sparkles, Copy, X, Printer, Check, Upload, FileJson } from 'lucide-react';
 
 interface PriceTier {
   minAmount: number;
@@ -47,6 +47,46 @@ const PriceQuoter: React.FC<PriceQuoterProps> = ({ initialData }) => {
   const [manualBw, setManualBw] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
+  // 預設報價規則 (當 LocalStorage 沒資料時使用)
+  const defaultBindingOptions: PriceOption[] = [
+    { id: 'b1', name: '無線膠裝 (含封面製作)', basePrice: 50, tierType: 'quantity', tiers: [{ minAmount: 50, price: 45 }, { minAmount: 100, price: 35 }] },
+    { id: 'b2', name: '塑膠膠環裝', basePrice: 40, tierType: 'quantity', tiers: [] },
+  ];
+
+  const defaultPaperOptions: PriceOption[] = [
+    { id: 'p1', name: '80g 道林紙 (內頁)', basePrice: 0.5, tierType: 'pages', sheetThickness: 0.1, tiers: [{ minAmount: 51, price: 0.4 }, { minAmount: 101, price: 0.3 }] },
+    { id: 'p2', name: '100g 銅版紙 (內頁)', basePrice: 0.8, tierType: 'pages', sheetThickness: 0.12, tiers: [] },
+  ];
+
+  const defaultAddons: Addon[] = [
+    { id: 'a1', name: '霧面導圓角', pricePerUnit: 15, selected: false },
+    { id: 'a2', name: '封面單面上亮膜', pricePerUnit: 10, selected: false },
+    { id: 'a3', name: '封面單面上霧膜', pricePerUnit: 10, selected: false },
+    { id: 'a4', name: '封面局部上光', pricePerUnit: 30, selected: false },
+  ];
+
+  const [bindingOptions, setBindingOptions] = useState<PriceOption[]>(defaultBindingOptions);
+  const [paperOptions, setPaperOptions] = useState<PriceOption[]>(defaultPaperOptions);
+  const [addons, setAddons] = useState<Addon[]>(defaultAddons);
+
+  // 初始化：從 LocalStorage 載入設定
+  useEffect(() => {
+    const savedBinding = localStorage.getItem('pm_binding_opts');
+    const savedPaper = localStorage.getItem('pm_paper_opts');
+    const savedAddons = localStorage.getItem('pm_addons_opts');
+
+    if (savedBinding) setBindingOptions(JSON.parse(savedBinding));
+    if (savedPaper) setPaperOptions(JSON.parse(savedPaper));
+    if (savedAddons) setAddons(JSON.parse(savedAddons).map((a: any) => ({ ...a, selected: false }))); // 重置選擇狀態
+  }, []);
+
+  // 每次設定變更時儲存至 LocalStorage
+  const saveSettingsToLocal = (newBinding?: PriceOption[], newPaper?: PriceOption[], newAddons?: Addon[]) => {
+    if (newBinding) localStorage.setItem('pm_binding_opts', JSON.stringify(newBinding));
+    if (newPaper) localStorage.setItem('pm_paper_opts', JSON.stringify(newPaper));
+    if (newAddons) localStorage.setItem('pm_addons_opts', JSON.stringify(newAddons));
+  };
+
   useEffect(() => {
     if (initialData) {
       setManualPages(initialData.totalPages);
@@ -54,23 +94,6 @@ const PriceQuoter: React.FC<PriceQuoterProps> = ({ initialData }) => {
       setManualBw(initialData.bwCount);
     }
   }, [initialData]);
-
-  const [bindingOptions, setBindingOptions] = useState<PriceOption[]>([
-    { id: 'b1', name: '無線膠裝 (含封面製作)', basePrice: 50, tierType: 'quantity', tiers: [{ minAmount: 50, price: 45 }, { minAmount: 100, price: 35 }] },
-    { id: 'b2', name: '塑膠膠環裝', basePrice: 40, tierType: 'quantity', tiers: [] },
-  ]);
-
-  const [paperOptions, setPaperOptions] = useState<PriceOption[]>([
-    { id: 'p1', name: '80g 道林紙 (內頁)', basePrice: 0.5, tierType: 'pages', sheetThickness: 0.1, tiers: [{ minAmount: 51, price: 0.4 }, { minAmount: 101, price: 0.3 }] },
-    { id: 'p2', name: '100g 銅版紙 (內頁)', basePrice: 0.8, tierType: 'pages', sheetThickness: 0.12, tiers: [] },
-  ]);
-
-  const [addons, setAddons] = useState<Addon[]>([
-    { id: 'a1', name: '霧面導圓角', pricePerUnit: 15, selected: false },
-    { id: 'a2', name: '封面單面上亮膜', pricePerUnit: 10, selected: false },
-    { id: 'a3', name: '封面單面上霧膜', pricePerUnit: 10, selected: false },
-    { id: 'a4', name: '封面局部上光', pricePerUnit: 30, selected: false },
-  ]);
 
   const [selectedBindingId, setSelectedBindingId] = useState('b1');
   const [selectedInnerPaperId, setSelectedInnerPaperId] = useState('p1');
@@ -99,20 +122,72 @@ const PriceQuoter: React.FC<PriceQuoterProps> = ({ initialData }) => {
 
   const updateOption = (type: 'binding' | 'paper', id: string, field: string, value: any) => {
     const setter = type === 'binding' ? setBindingOptions : setPaperOptions;
-    setter(prev => prev.map(opt => opt.id === id ? { ...opt, [field]: value } : opt));
+    setter(prev => {
+      const next = prev.map(opt => opt.id === id ? { ...opt, [field]: value } : opt);
+      saveSettingsToLocal(type === 'binding' ? next : undefined, type === 'paper' ? next : undefined);
+      return next;
+    });
   };
 
   const updateAddon = (id: string, field: keyof Addon, value: any) => {
-    setAddons(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
+    setAddons(prev => {
+      const next = prev.map(a => a.id === id ? { ...a, [field]: value } : a);
+      saveSettingsToLocal(undefined, undefined, next);
+      return next;
+    });
   };
 
   const addNewAddon = () => {
     const newA: Addon = { id: Date.now().toString(), name: '新加工項目', pricePerUnit: 0, selected: false };
-    setAddons([...addons, newA]);
+    const next = [...addons, newA];
+    setAddons(next);
+    saveSettingsToLocal(undefined, undefined, next);
   };
 
   const removeAddon = (id: string) => {
-    setAddons(prev => prev.filter(a => a.id !== id));
+    const next = addons.filter(a => a.id !== id);
+    setAddons(next);
+    saveSettingsToLocal(undefined, undefined, next);
+  };
+
+  // 匯出報價設定檔
+  const exportConfig = () => {
+    const config = {
+      binding: bindingOptions,
+      paper: paperOptions,
+      addons: addons.map(a => ({ ...a, selected: false }))
+    };
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `影城報價設定_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // 匯入報價設定檔
+  const importConfig = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const config = JSON.parse(event.target?.result as string);
+        if (config.binding && config.paper && config.addons) {
+          setBindingOptions(config.binding);
+          setPaperOptions(config.paper);
+          setAddons(config.addons);
+          saveSettingsToLocal(config.binding, config.paper, config.addons);
+          alert('設定檔已成功匯入並套用！');
+        } else {
+          throw new Error('格式不正確');
+        }
+      } catch (err) {
+        alert('匯入失敗，請確認檔案格式正確。');
+      }
+    };
+    reader.readAsText(file);
   };
 
   const saveScenario = () => {
@@ -138,7 +213,7 @@ const PriceQuoter: React.FC<PriceQuoterProps> = ({ initialData }) => {
       <div className="flex justify-between items-center bg-white p-8 rounded-[3rem] border shadow-sm">
         <div className="flex items-center gap-6">
           <div className="p-5 bg-gradient-to-br from-orange-500 to-orange-600 text-white rounded-[1.5rem] shadow-xl shadow-orange-100"><Calculator className="w-8 h-8" /></div>
-          <div><h3 className="text-2xl font-black text-slate-900 italic uppercase tracking-tighter">影城 智慧報價工作站</h3><p className="text-slate-400 text-[10px] font-black mt-1 uppercase tracking-widest italic">Professional Quote Engine v3.2</p></div>
+          <div><h3 className="text-2xl font-black text-slate-900 italic uppercase tracking-tighter">影城 智慧報價工作站</h3><p className="text-slate-400 text-[10px] font-black mt-1 uppercase tracking-widest italic">Professional Quote Engine v4.0</p></div>
         </div>
         <div className="flex gap-4">
            <button onClick={() => setShowSettings(!showSettings)} className={`px-8 py-4 rounded-2xl text-sm font-black transition-all ${showSettings ? 'bg-slate-900 text-white shadow-lg' : 'bg-white text-slate-600 border'}`}>
@@ -151,9 +226,18 @@ const PriceQuoter: React.FC<PriceQuoterProps> = ({ initialData }) => {
 
       {showSettings ? (
         <div className="bg-white rounded-[3.5rem] border border-slate-200 p-12 shadow-sm animate-in zoom-in-95">
-          <div className="flex items-center gap-4 mb-10 border-b pb-8">
-            <div className="p-3 bg-orange-100 text-orange-600 rounded-2xl"><Settings className="w-6 h-6" /></div>
-            <div><h3 className="text-xl font-black text-slate-900 italic">報價參數與加工細節管理</h3><p className="text-slate-500 text-[10px] font-bold mt-1 uppercase tracking-widest">Configure price tiers and add-on costs</p></div>
+          <div className="flex flex-wrap items-center justify-between gap-6 mb-10 border-b pb-8">
+            <div className="flex items-center gap-4">
+              <div className="p-3 bg-orange-100 text-orange-600 rounded-2xl"><Settings className="w-6 h-6" /></div>
+              <div><h3 className="text-xl font-black text-slate-900 italic">報價參數與加工細節管理</h3><p className="text-slate-500 text-[10px] font-bold mt-1 uppercase tracking-widest">Configure price tiers and sync across devices</p></div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={exportConfig} className="flex items-center gap-2 px-6 py-3 bg-slate-100 text-slate-600 rounded-xl text-xs font-black hover:bg-slate-200 transition-all italic uppercase"><Download className="w-4 h-4"/> 匯出設定檔</button>
+              <label className="flex items-center gap-2 px-6 py-3 bg-orange-50 text-orange-600 rounded-xl text-xs font-black hover:bg-orange-100 transition-all italic uppercase cursor-pointer">
+                <Upload className="w-4 h-4"/> 匯入設定檔
+                <input type="file" accept=".json" onChange={importConfig} className="hidden" />
+              </label>
+            </div>
           </div>
 
           <div className="space-y-6">
@@ -242,7 +326,7 @@ const PriceQuoter: React.FC<PriceQuoterProps> = ({ initialData }) => {
           </div>
           
           <div className="mt-14 pt-8 border-t flex justify-end">
-             <button onClick={() => setShowSettings(false)} className="px-14 py-5 bg-orange-500 text-white rounded-[1.5rem] font-black shadow-xl shadow-orange-100 flex items-center gap-3 active:scale-95 transition-all text-sm uppercase italic tracking-widest"><SaveAll className="w-5 h-5"/> 儲存並套用所有設定</button>
+             <button onClick={() => setShowSettings(false)} className="px-14 py-5 bg-orange-500 text-white rounded-[1.5rem] font-black shadow-xl shadow-orange-100 flex items-center gap-3 active:scale-95 transition-all text-sm uppercase italic tracking-widest"><SaveAll className="w-5 h-5"/> 儲存並關閉</button>
           </div>
         </div>
       ) : (
