@@ -62,7 +62,7 @@ const PdfAnalyzer: React.FC<PdfAnalyzerProps> = ({ onTransfer }) => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Fix: Added 'canvas' property which is required by RenderParameters in recent PDF.js versions
+        // 修正：加入 canvas 屬性以符合 RenderParameters 類型要求
         await page.render({ 
           canvasContext: context, 
           viewport: renderViewport,

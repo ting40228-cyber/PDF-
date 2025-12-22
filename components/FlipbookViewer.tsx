@@ -52,7 +52,7 @@ const FlipbookViewer: React.FC = () => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Fix: Added 'canvas' property to meet RenderParameters requirement
+        // 修正：加入 canvas 屬性以符合 RenderParameters 類型要求
         await page.render({ 
           canvasContext: context, 
           viewport: viewport,
