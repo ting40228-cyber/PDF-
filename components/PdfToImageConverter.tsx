@@ -101,7 +101,7 @@ const PdfToImageConverter: React.FC = () => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Fix: Add 'canvas' property to meet RenderParameters type requirements
+        // 修正：加入 'canvas' 屬性，根據 RenderParameters 定義這是必要的
         await page.render({ 
           canvasContext: context, 
           viewport: finalViewport,
@@ -123,7 +123,7 @@ const PdfToImageConverter: React.FC = () => {
         if (thumbCtx) {
             thumbCtx.fillStyle = '#ffffff';
             thumbCtx.fillRect(0, 0, thumbCanvas.width, thumbCanvas.height);
-            // Fix: Add 'canvas' property for thumbnail generation
+            // 修正：加入 'canvas' 屬性，這在型別檢查中是必填的
             await page.render({ 
               canvasContext: thumbCtx, 
               viewport: thumbViewport,
@@ -148,6 +148,7 @@ const PdfToImageConverter: React.FC = () => {
       }
       setPages(newPages);
     } catch (error) {
+      console.error(error);
       alert('處理失敗');
     } finally {
       setIsProcessing(false);
