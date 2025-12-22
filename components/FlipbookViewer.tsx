@@ -53,10 +53,10 @@ const FlipbookViewer: React.FC = () => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Restore 'canvas' property to satisfy the RenderParameters type which requires it in this context
+        // Fix: Added 'canvas' property to satisfy the RenderParameters type requirement
         await page.render({ 
           canvasContext: context, 
-          viewport,
+          viewport: viewport,
           canvas: canvas
         }).promise;
         pageImages.push(canvas.toDataURL('image/jpeg', 0.85));

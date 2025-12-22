@@ -3,6 +3,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Upload, FileCheck, Palette, Eye, Ruler, Calculator, AlertTriangle, CheckCircle2, Maximize, List, Copy, Check, Filter } from 'lucide-react';
 
+// 設定 Worker 路徑
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
 
 interface PageAnalysis {
@@ -62,7 +63,7 @@ const PdfAnalyzer: React.FC<PdfAnalyzerProps> = ({ onTransfer }) => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Restore 'canvas' property to satisfy the RenderParameters type which requires it in this context
+        // Fix: Added 'canvas' property to satisfy the RenderParameters type requirement
         await page.render({ 
           canvasContext: context, 
           viewport: renderViewport,
