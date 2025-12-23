@@ -1,9 +1,8 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Upload, ChevronLeft, ChevronRight, BookOpen, Share2, Copy, Loader2, Palette, Layout } from 'lucide-react';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs`;
 
 type Theme = 'studio' | 'wood' | 'office' | 'dark';
 
@@ -13,12 +12,10 @@ const FlipbookViewer: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(0); 
   const [isLoading, setIsLoading] = useState(false);
   const [flipDirection, setFlipDirection] = useState<'next' | 'prev' | null>(null);
-  const [showShareModal, setShowShareModal] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [activeTheme, setActiveTheme] = useState<Theme>('studio');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -56,7 +53,7 @@ const FlipbookViewer: React.FC = () => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Fix: Add missing 'canvas' property to RenderParameters to comply with types
+        // Fix: Added required 'canvas' property to RenderParameters
         await page.render({ 
           canvasContext: context, 
           viewport: viewport,
@@ -157,19 +154,19 @@ const FlipbookViewer: React.FC = () => {
         )}
       </div>
 
-      <div ref={containerRef} className={`flex-1 rounded-[4.5rem] border-8 border-white flex items-center justify-center overflow-hidden min-h-[700px] relative group shadow-2xl transition-all duration-1000 ${
+      <div className={`flex-1 rounded-[4.5rem] border-8 border-white flex items-center justify-center overflow-hidden min-h-[700px] relative group shadow-2xl transition-all duration-1000 ${
         activeTheme === 'dark' ? 'bg-[#0a0a0b]' : 'bg-gradient-to-b from-slate-50 to-slate-200'
       }`}>
         <style>{`
           .perspective-2000 { perspective: 2000px; }
           .perspective-3000 { perspective: 3000px; }
           @keyframes flip-left {
-            0% { transform: rotateY(0deg); filter: brightness(1); }
-            100% { transform: rotateY(-140deg); filter: brightness(0.1); opacity: 0; }
+            0% { transform: rotateY(0deg); opacity: 1; }
+            100% { transform: rotateY(-140deg); opacity: 0; }
           }
           @keyframes flip-right {
-            0% { transform: rotateY(0deg); filter: brightness(1); }
-            100% { transform: rotateY(140deg); filter: brightness(0.1); opacity: 0; }
+            0% { transform: rotateY(0deg); opacity: 1; }
+            100% { transform: rotateY(140deg); opacity: 0; }
           }
           .animate-flip-left { animation: flip-left 0.8s ease-in-out forwards; }
           .animate-flip-right { animation: flip-right 0.8s ease-in-out forwards; }
