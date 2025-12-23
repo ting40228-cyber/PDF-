@@ -2,7 +2,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 import { Upload, FileCheck, Palette, Ruler, Calculator, AlertTriangle, CheckCircle2, Maximize, List, Copy, Check } from 'lucide-react';
 
-// 使用與 package.json 相符的 Worker 版本，避免版本不一致
+// 強制指定與依賴版本相符的 Worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@4.4.168/build/pdf.worker.min.mjs`;
 
 interface PageAnalysis {
@@ -24,7 +24,6 @@ const PdfAnalyzer: React.FC<PdfAnalyzerProps> = ({ onTransfer }) => {
   const [progress, setProgress] = useState(0);
   const [results, setResults] = useState<PageAnalysis[]>([]);
   const [copiedType, setCopiedType] = useState<'color' | 'bw' | null>(null);
-  const [filterIssues, setFilterIssues] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -62,7 +61,7 @@ const PdfAnalyzer: React.FC<PdfAnalyzerProps> = ({ onTransfer }) => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Fix: Added required 'canvas' property to RenderParameters
+        // Fix: Added required 'canvas' property to RenderParameters in pdfjs-dist v4
         await page.render({ 
           canvasContext: context, 
           viewport: renderViewport,

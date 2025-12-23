@@ -53,7 +53,7 @@ const FlipbookViewer: React.FC = () => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Fix: Added required 'canvas' property to RenderParameters
+        // Fix: Added required 'canvas' property to RenderParameters in pdfjs-dist v4
         await page.render({ 
           canvasContext: context, 
           viewport: viewport,

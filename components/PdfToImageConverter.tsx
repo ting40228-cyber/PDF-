@@ -101,7 +101,7 @@ const PdfToImageConverter: React.FC = () => {
         context.fillStyle = '#ffffff';
         context.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Fix: Added required 'canvas' property to RenderParameters
+        // Fix: Added required 'canvas' property to RenderParameters in pdfjs-dist v4
         await page.render({ 
           canvasContext: context, 
           viewport: finalViewport,
@@ -116,14 +116,15 @@ const PdfToImageConverter: React.FC = () => {
 
         const thumbScale = 400 / originalWidthPts; 
         const thumbCanvas = document.createElement('canvas');
-        const thumbViewport = page.getPageViewport({ scale: thumbScale });
+        // 修正：getPageViewport -> getViewport
+        const thumbViewport = page.getViewport({ scale: thumbScale });
         thumbCanvas.width = thumbViewport.width;
         thumbCanvas.height = thumbViewport.height;
         const thumbCtx = thumbCanvas.getContext('2d');
         if (thumbCtx) {
             thumbCtx.fillStyle = '#ffffff';
             thumbCtx.fillRect(0, 0, thumbCanvas.width, thumbCanvas.height);
-            // Fix: Added required 'canvas' property to RenderParameters
+            // Fix: Added required 'canvas' property to RenderParameters in pdfjs-dist v4
             await page.render({ 
               canvasContext: thumbCtx, 
               viewport: thumbViewport,
